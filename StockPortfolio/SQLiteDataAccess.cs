@@ -1,4 +1,7 @@
-﻿using System.Data.SQLite;
+﻿using System;
+using System.Data.SQLite;
+using System.Net.NetworkInformation;
+using System.Transactions;
 
 namespace StockPortfolio
 {
@@ -12,33 +15,39 @@ namespace StockPortfolio
             return connectionString;
         }
 
-        public static List<string> LoadUsers()
-        {   
-            List<string> users = new List<string>();    
+        public static List<Transaction> LoadTransactions()
+        {
+            List<Transaction> transactions = new List<Transaction>();
             using (SQLiteConnection connection = new SQLiteConnection($"Data Source={GetConnectionString()}; Version=3;"))
             {
                 connection.Open();
-                string query = "SELECT Username FROM Users";
+                string query = "SELECT StockSymbol, Type, Quantity FROM Transactions";
                 using (SQLiteCommand command = new SQLiteCommand(query, connection))
                 using (SQLiteDataReader reader = command.ExecuteReader())
                 {
                     while (reader.Read())
-                        users.Add(reader.GetString(0));
+                    {
+                        Enum.TryParse(reader.GetString(1), out TransactionType type);
+                        Transaction transaction = new Transaction(reader.GetString(0), type, reader.GetInt32(2));
+                        transactions.Add(transaction);
+                    }
                 }
                 connection.Close();
             }
-            return users;
+            return transactions;
         }
 
-        public static void SaveUser(string username)
+        public static void SaveTransaction(Transaction t)
         {
             using (SQLiteConnection connection = new SQLiteConnection($"Data Source={GetConnectionString()}; Value=3;"))
             {
                 connection.Open();
-                string query = "INSERT INTO Users (Username) VALUES (?)";
+                string query = "INSERT INTO Transactions (StockSymbol, Type, Quantity) VALUES (?, ?, ?)";
                 using (SQLiteCommand command = new SQLiteCommand(query, connection))
                 {
-                    command.Parameters.Add("username", System.Data.DbType.String).Value = username;
+                    command.Parameters.Add("stock symbol", System.Data.DbType.String).Value = t.StockSymbol;
+                    command.Parameters.Add("type", System.Data.DbType.String).Value = Enum.GetName(typeof(TransactionType), t.Type);
+                    command.Parameters.Add("quantity", System.Data.DbType.Int32).Value = t.Quantity;
                     try
                     {
                         command.ExecuteNonQuery();
@@ -58,14 +67,14 @@ namespace StockPortfolio
             using (SQLiteConnection connection = new SQLiteConnection($"Data Source={GetConnectionString()}; Version=3;"))
             {
                 connection.Open();
-                string query = "SELECT Symbol, Company, CurrentPrice FROM Stocks";
+                string query = "SELECT Symbol, Company, Price FROM Stocks";
                 using (SQLiteCommand command = new SQLiteCommand(query, connection))
                 using (SQLiteDataReader reader = command.ExecuteReader())
                 {
                     while (reader.Read())
                     {
-                        Stock s = new Stock(reader.GetString(0), reader.GetString(1), reader.GetDouble(2));
-                        stocks.Add(s);
+                        Stock stock = new Stock(reader.GetString(0), reader.GetString(1), reader.GetDouble(2));
+                        stocks.Add(stock);
                     }
                 }
                 connection.Close();
@@ -73,17 +82,17 @@ namespace StockPortfolio
             return stocks;
         }
 
-        public static void SaveStock(Stock s)
+        public static void SaveStock(Stock stock)
         {
             using (SQLiteConnection connection = new SQLiteConnection($"Data Source={GetConnectionString()}; Value=3;"))
             {
                 connection.Open();
-                string query = "INSERT INTO Stocks (Symbol, Company, CurrentPrice) VALUES (?, ?, ?)";
+                string query = "INSERT INTO Stocks (Symbol, Company, Price) VALUES (?, ?, ?)";
                 using (SQLiteCommand command = new SQLiteCommand(query, connection))
                 {
-                    command.Parameters.Add("symbol", System.Data.DbType.String).Value = s.Symbol;
-                    command.Parameters.Add("company", System.Data.DbType.String).Value = s.Company;
-                    command.Parameters.Add("current price", System.Data.DbType.Double).Value = s.CurrentPrice;
+                    command.Parameters.Add("symbol", System.Data.DbType.String).Value = stock.Symbol;
+                    command.Parameters.Add("company", System.Data.DbType.String).Value = stock.Company;
+                    command.Parameters.Add("price", System.Data.DbType.Double).Value = stock.Price;
                     try
                     {
                         command.ExecuteNonQuery();

@@ -1,105 +1,65 @@
-﻿namespace StockPortfolio
+﻿using System.Xml.Schema;
+
+namespace StockPortfolio
 {
     public class Helper
     {
-        public static int GetInput(int minInput, int maxInput)
-        {
-            int input = -1;
-            while (input < minInput || input > maxInput)
-            {
-                try
-                {
-                    input = Convert.ToInt32(Console.ReadLine());
-                    if (input < minInput || input > maxInput)
-                        Console.WriteLine($"\nInvalid input! Please enter a number between {minInput} and {maxInput}...");
-                }
-                catch (OverflowException)
-                {
-                    Console.WriteLine($"\nInvalid input! Please enter a number between {minInput} and {maxInput}...");
-                }
-                catch (FormatException)
-                {
-                    Console.WriteLine($"\nCharacters are not allowed! Please enter a number between {minInput} and {maxInput}...");
-                }
-            }
-            return input;
-        }
-
-        public static string GetStockSymbol()
-        {
-            string symbol = "";          
-            do
-            {
-                Console.WriteLine("\nEnter stock symbol (2-5 characters, only letters)...");
-                symbol = Console.ReadLine().ToUpper();
-            } while (symbol.Any(char.IsDigit) || symbol.Length < 2 || symbol.Length > 5);
-            return symbol;
-        }
-
-        public static void GoBackToMain()
-        {
-            Console.WriteLine("\n1 - Back to main menu");
-            Console.WriteLine("\nPress 0 to exit application...");
-            int input = GetInput(0, 1);
-            if (input == 0)
-            {
-                Console.WriteLine("\nApplication exited successfully!");
-                Environment.Exit(0);
-            }
-            if (input == 1)
-            {
-                Program.MainMenu.Run();
-            }
-        }
-        // add an user - USER
-        public static void AddUser()
-        {
-            Console.Clear();
-            Console.WriteLine("Adding a new user...");
-            List<string> users = SQLiteDataAccess.LoadUsers();
-            string username = "";
-            bool exist = true;
-            while (exist)
-            {
-                Console.WriteLine("\nPlease enter a new username...");
-                username = Console.ReadLine().ToLower();
-                exist = false;
-                foreach (string user in users)
-                {
-                    if (user.Equals(username))
-                        exist = true;
-                }
-                if (exist)
-                    Console.WriteLine("Username already used!");
-            }
-            SQLiteDataAccess.SaveUser(username);
-            Console.WriteLine($"\nUser {username} has been added!");
-            GoBackToMain();
-        }
-        // show stocks from portfolio - soon
+        // show stocks - USER
         public static void ShowMyStocks()
         {
             Console.Clear();
-            Console.WriteLine("My stocks...soon");
-            // create transaction table...
-            GoBackToMain();
+            Console.WriteLine("My stocks...");
+            Console.WriteLine("\n{0,-10} {1,-17} {2}", "Symbol", "Quantity", "Total price");
+            Console.WriteLine(new string('-', 40));
+            List<Stock> stocks = SQLiteDataAccess.LoadStocks();
+            double total = 0;
+            foreach (Stock stock in stocks)
+            {
+                int buyTypeQnt = Validator.GetQuantityByType(stock.Symbol, TransactionType.BUY);
+                int sellTypeQnt = Validator.GetQuantityByType(stock.Symbol, TransactionType.SELL);
+                int stockQnt = buyTypeQnt - sellTypeQnt;
+                if (stockQnt > 0)
+                {
+                    Console.WriteLine("{0,-10} {1,8} {2,20:C2}", stock.Symbol, stockQnt, stock.Price * stockQnt);
+                    total += stock.Price * stockQnt;
+                }
+            }
+            Console.WriteLine("\nYour stock portfolio is worth {0:C2}!", total);
         }
-        // add a transaction to portfolio - soon
+        // add a transaction - USER
         public static void AddTransaction()
         {
             Console.Clear();
-            Console.WriteLine("Adding a new transaction...soon");
-            GoBackToMain();
-        }
-        // list users - ADMIN
-        public static void ListUsers()
-        {
-            Console.Clear();
-            Console.WriteLine("List of users:\n");
-            List<string> users = SQLiteDataAccess.LoadUsers();
-            foreach (string user in users)
-                Console.WriteLine(user);
-            GoBackToMain();
+            Console.WriteLine("Adding a new transaction...");
+
+            string symbol = "";
+            bool found;
+            do
+            {
+                symbol = Validator.GetStockSymbol();
+                found = Validator.FindStockSymbol(symbol);
+                if (!found)
+                {
+                    Console.WriteLine($"\nStock with symbol {symbol} not found.");
+                }
+            } while (!found);
+
+            TransactionType type = Validator.GetTransactionType();
+
+            int buyTypeQnt = Validator.GetQuantityByType(symbol, TransactionType.BUY);
+            if (buyTypeQnt == 0 && type == TransactionType.SELL)
+            {
+                Console.WriteLine($"\nYou don't have any stocks with symbol {symbol}. Please buy first!");
+                return;
+            }
+            int sellTypeQnt = Validator.GetQuantityByType(symbol, TransactionType.SELL);
+            int stockQnt = buyTypeQnt - sellTypeQnt;
+            Console.WriteLine($"\nEnter quantity (you have {stockQnt} stocks)...");
+            int qnt = Validator.GetQuantity(type, stockQnt);
+            
+            Transaction transaction = new Transaction(symbol, type, qnt);
+            SQLiteDataAccess.SaveTransaction(transaction);
+            Console.WriteLine($"\nYou made a {type} transaction of {qnt} {symbol} stocks!");
         }
         // add a new stock - ADMIN
         public static void AddStock()
@@ -107,50 +67,30 @@
             Console.Clear();
             Console.WriteLine("Adding a new stock...");
 
-            // validare symbol - verifica existenta in tabelul Stocks
-            List<Stock> stocks = SQLiteDataAccess.LoadStocks();
-            string symbol = GetStockSymbol();
-            bool exist = true;
-            while (exist)
+            string symbol = "";
+            bool found;
+            do
             {
-                exist = false;
-                foreach (Stock stock in stocks)
-                {
-                    if (stock.Symbol.Equals(symbol))
-                        exist = true;
-                }   
-                if (exist)
+                symbol = Validator.GetStockSymbol();
+                found = Validator.FindStockSymbol(symbol);
+                if (found)
                 {
                     Console.WriteLine($"\nStock with symbol {symbol} already exists!");
-                    symbol = GetStockSymbol();
                 }
-            }
-
-            // company
-            Console.WriteLine("\nEnter company...");
-            string company = Console.ReadLine();
-
-            // validari currentPrice - real pozitiv
-            Console.WriteLine("\nEnter current price...");
-            double currentPrice = -1;
-            while (currentPrice <= 0)
+            } while (found);
+          
+            string company = "";
+            do
             {
-                try
-                {
-                    currentPrice = Convert.ToDouble(Console.ReadLine());
-                    if (currentPrice <= 0)
-                        Console.WriteLine("\nInvalid input! Please enter a value greater than 0...");
-                }
-                catch (FormatException)
-                {
-                    Console.WriteLine("\nCharacters are not allowed! Please enter a value greater than 0...");
-                }
-            }    
+                Console.WriteLine("\nEnter company (at least 2 characters)...");
+                company = Console.ReadLine();
+            } while (company.Length < 2);
+
+            double price = Validator.GetPrice();  
             
-            Stock s = new Stock(symbol, company, currentPrice);
+            Stock s = new Stock(symbol, company, price);
             SQLiteDataAccess.SaveStock(s);
             Console.WriteLine($"\nStock with symbol {symbol} has been added!");
-            GoBackToMain();
         }  
         // delete a stock - ADMIN
         public static void DeleteStock()
@@ -158,27 +98,24 @@
             Console.Clear();
             Console.WriteLine("Deleting a stock...");      
             Console.WriteLine("\nCurrent list of stocks:");
-            Console.WriteLine("\n{0,-10} {1,-26} {2,17}", "Symbol", "Company", "Current price");
-            Console.WriteLine(new string('-', 55));
+            Console.WriteLine("\n{0,-10} {1,-26} {2,12}", "Symbol", "Company", "Price");
+            Console.WriteLine(new string('-', 50));
             List<Stock> stocks = SQLiteDataAccess.LoadStocks();
             foreach (Stock stock in stocks)
-                Console.WriteLine("{0,-10} {1,-26} {2,17:C2}", stock.Symbol, stock.Company, stock.CurrentPrice);
-            // validare symbol - daca nu exista, interogarea nu poate avea loc
-            string symbol = GetStockSymbol();
-            bool exist = false;
-            foreach (Stock stock in stocks)
             {
-                if (stock.Symbol.Equals(symbol))
-                    exist = true;
+                Console.WriteLine("{0,-10} {1,-26} {2,12:C2}", stock.Symbol, stock.Company, stock.Price);
             }
-            if (exist)
+            string symbol = Validator.GetStockSymbol();
+            bool found = Validator.FindStockSymbol(symbol);    
+            if (found)
             {
                 SQLiteDataAccess.DeleteStock(symbol);
                 Console.WriteLine($"\nStock with symbol {symbol} has been deleted!");
             }
             else
-                Console.WriteLine($"\nStock with symbol {symbol} doesn't exist!");
-            GoBackToMain();
+            {
+                Console.WriteLine($"\nStock with symbol {symbol} not found!");
+            }
         }
     }
 }

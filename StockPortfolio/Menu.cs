@@ -4,54 +4,82 @@
     {
         private Menu _root;
         private string _header;
-        private List<MenuItem> _menuItems;
+        private List<MenuOption> _menuOptions;
 
-        public Menu(Menu root, string header, List<MenuItem> menuItems)
+        public Menu(Menu root, string header, List<MenuOption> menuOptions)
         {
             _root = root;
             _header = header;
-            _menuItems = menuItems;
+            _menuOptions = menuOptions;
         }
 
         public Menu Root { get => _root; set => _root = value; }
         public string Header { get => _header; set => _header = value; }
-        public List<MenuItem> MenuItems { get => _menuItems; set => _menuItems = value; }
+        public List<MenuOption> MenuOptions { get => _menuOptions; set => _menuOptions = value; }
 
         public void Display()
         {   
             Console.Clear();
             Console.WriteLine(_header + "\n");
-            for(int i = 0; i < _menuItems.Count; i++)
+            for (int i = 0; i < _menuOptions.Count; i++)
             {
-                Console.WriteLine( (i + 1) + " - " + _menuItems[i].Text );
+                Console.WriteLine( (i + 1) + " - " + _menuOptions[i].Text );
             }
             // optiunea Back nu este disponibila in main menu
-            if(_root != null)
+            if (_root != null)
             {
-                Console.WriteLine( (_menuItems.Count + 1) + " - " + "Back" );
-            }      
+                Console.WriteLine((_menuOptions.Count + 1) + " - Back");
+            }     
             Console.WriteLine("\nPress 0 to exit application...");
+        }
+
+        public void GoBackOrExit()
+        {
+            Console.WriteLine("\n1 - Back");
+            Console.WriteLine("\nPress 0 to exit application...");
+            int option = Validator.GetNumberInRange(0, 1);
+            if (option == 0)
+            {
+                Console.WriteLine("\nApplication exited successfully!");
+                Environment.Exit(0);
+            }
+            if (option == 1)
+            {
+                Run();
+            }
         }
 
         public void Run()
         {   
             Display();
-            int input = -1;
+            int option = -1;
             if (_root == null)
-                input = Helper.GetInput(0, _menuItems.Count); // main menu nu permite Back
+            {
+                // main menu nu permite Back
+                option = Validator.GetNumberInRange(0, _menuOptions.Count); 
+            }
             else
-                input = Helper.GetInput(0, _menuItems.Count + 1); // optiunea Back corespunde _menuItems.Count + 1
-            if (input == 0)
+            {
+                // optiunea Back corespunde _menuItems.Count + 1
+                option = Validator.GetNumberInRange(0, _menuOptions.Count + 1); 
+            }
+            if (option == 0)
             {
                 Console.WriteLine("\nApplication exited successfully!");
                 Environment.Exit(0);
             }
-            if(input == _menuItems.Count + 1) 
+            if(option == _menuOptions.Count + 1)
+            {
                 _root.Run();
+            }
             else
             {
-                Action action = _menuItems[input - 1].Action;
-                action();               
+                Action action = _menuOptions[option - 1].Action;
+                action();
+                if (_root != null)
+                {
+                    GoBackOrExit();
+                }
             }     
         }
     }

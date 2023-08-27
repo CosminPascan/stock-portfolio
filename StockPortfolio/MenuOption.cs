@@ -1,11 +1,11 @@
 ﻿namespace StockPortfolio
 {
-    public class MenuItem
+    public class MenuOption
     {
         private string _text;
         private Action _action;
 
-        public MenuItem(string text, Action action)
+        public MenuOption(string text, Action action)
         {
             _text = text;
             _action = action;
