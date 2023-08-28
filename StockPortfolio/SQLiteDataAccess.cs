@@ -106,6 +106,29 @@ namespace StockPortfolio
             }
         }
 
+        public static void UpdatePrice(string symbol, double price)
+        {
+            using (SQLiteConnection connection = new SQLiteConnection($"Data Source={GetConnectionString()}; Version=3;"))
+            {
+                connection.Open();
+                string query = $"UPDATE Stocks SET Price = :price WHERE Symbol = :symbol";
+                using (SQLiteCommand command = new SQLiteCommand(query, connection))
+                {
+                    command.Parameters.Add("price", System.Data.DbType.Double).Value = price;
+                    command.Parameters.Add("symbol", System.Data.DbType.String).Value = symbol;
+                    try
+                    {
+                        command.ExecuteNonQuery();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                    }
+                }
+                connection.Close();
+            }
+        }
+
         public static void DeleteStock(string symbol)
         {
             using (SQLiteConnection connection = new SQLiteConnection($"Data Source={GetConnectionString()}; Version=3;"))

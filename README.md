@@ -3,7 +3,7 @@ This is a simple C# console application built for users to manage their stock po
 
 ## Features
 - **Console application menu:** automated menu to ease navigation through all options
-- **CRUD operations on database:** you can perform buy/sell transactions, see you stock portfolio, add/delete a stock
+- **CRUD operations on database:** you can perform buy/sell transactions, see your stock portfolio, add/delete a stock or modify a stock price
 
 ## Run Locally
 Clone the project
@@ -29,9 +29,6 @@ Run application
 ### Transactions table
 | Parameter | Type     | Description                |
 | :-------- | :------- | :------------------------- |
-| TransactionId | `INTEGER` | PK, not null |
-| StockId | `INTEGER` | FK, not null |
+| TransactionId | `INTEGER` | PK, unique, not null |
+| StockSymbol | `TEXT` | FK, not null |
 | Quantity | `INTEGER` | not null |
-
-## Roadmap
-- modify stock price option in ADMIN menu

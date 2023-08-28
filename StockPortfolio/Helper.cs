@@ -92,6 +92,29 @@ namespace StockPortfolio
             SQLiteDataAccess.SaveStock(s);
             Console.WriteLine($"\nStock with symbol {symbol} has been added!");
         }  
+        // modify stock price - ADMIN
+        public static void ModifyStockPrice()
+        {
+            Console.Clear();
+            Console.WriteLine("Modifying a stock price...");
+
+            string symbol = "";
+            bool found;
+            do
+            {
+                symbol = Validator.GetStockSymbol();
+                found = Validator.FindStockSymbol(symbol);
+                if (!found)
+                {
+                    Console.WriteLine($"\nStock with symbol {symbol} not found.");
+                }
+            } while (!found);
+
+            double price = Validator.GetPrice();
+
+            SQLiteDataAccess.UpdatePrice(symbol, price);
+            Console.WriteLine("\nPrice of stock {0} has been updated - {1:C2}!", symbol, price);
+        }
         // delete a stock - ADMIN
         public static void DeleteStock()
         {

@@ -28,6 +28,7 @@
 
             // admin menu items
             adminMenuItems.Add(new MenuOption("Add stock", Helper.AddStock));
+            adminMenuItems.Add(new MenuOption("Modify stock price", Helper.ModifyStockPrice));
             adminMenuItems.Add(new MenuOption("Delete stock", Helper.DeleteStock));
             
             mainMenu.Run();
