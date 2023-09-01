@@ -1,9 +1,8 @@
-﻿using System;
-using System.Data.SQLite;
-using System.Net.NetworkInformation;
-using System.Transactions;
+﻿using System.Data.SQLite;
+using StockPortfolioTracker.stock;
+using StockPortfolioTracker.transaction;
 
-namespace StockPortfolio
+namespace StockPortfolioTracker
 {
     public class SQLiteDataAccess
     {

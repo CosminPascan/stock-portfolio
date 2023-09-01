@@ -1,7 +1,10 @@
-﻿namespace StockPortfolio
+﻿using StockPortfolioTracker.stock;
+using StockPortfolioTracker.transaction;
+
+namespace StockPortfolioTracker
 {
-    public static class Validator
-    {
+    public static class Helper
+    {   
         public static int GetNumberInRange(int low, int high)
         {
             int number = -1;
@@ -17,13 +20,13 @@
                 }
                 catch (OverflowException)
                 {
-                    Console.WriteLine($"\nInvalid number! Please enter a number between {low} and {high}...");
+                    Console.WriteLine($"\nInvalid input! Please enter a number between {low} and {high}...");
                 }
                 catch (FormatException)
                 {
                     Console.WriteLine($"\nCharacters are not allowed! Please enter a number between {low} and {high}...");
                 }
-            } while (number < low ||  number > high);
+            } while (number < low || number > high);
             return number;
         }
 
@@ -44,7 +47,7 @@
             List<Stock> stocks = SQLiteDataAccess.LoadStocks();
             foreach (Stock stock in stocks)
             {
-                if (stock.Symbol.Equals(symbol)) 
+                if (stock.Symbol.Equals(symbol))
                 {
                     found = true;
                 }
@@ -52,12 +55,12 @@
             return found;
         }
 
-        public static double GetPrice()
+        public static double GetPositiveDouble()
         {
             Console.WriteLine("\nEnter stock price...");
             double price = 0;
             do
-            {   
+            {
                 try
                 {
                     price = Convert.ToDouble(Console.ReadLine());
